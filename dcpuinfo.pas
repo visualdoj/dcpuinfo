@@ -75,14 +75,12 @@ begin
     pop _eax
     popfd
   end ['eax'];
-  //Writeln(BinStr(_eax, 32), ' ', BinStr(_ebx, 32));
   if ((_eax xor _ebx) and $200000) = 0 then
     Exit(0);
   if Ext then begin
     GetCpuId($80000000, 0, @R[0]);
   end else
     GetCpuId(0, 0, @R[0]);
-  Writeln(R[0], ' ', R[1], ' ', R[2], ' ', R[3]);
   Result := R[0];
 end;
 
@@ -96,7 +94,6 @@ begin
   if M < 1 then
     Exit;
   GetCpuId(1, 0, @R[0]);
-  Writeln(R[0], ' ', R[1], ' ', R[2], ' ', R[3]);
   CpuInfo.HasSSE  := (R[3] and (1 shl 25)) <> 0;
   CpuInfo.HasSSE2 := (R[3] and (1 shl 26)) <> 0;
   CpuInfo.HasSSE3 := ((R[2] and (1 shl 0)) <> 0) and
