@@ -37,6 +37,7 @@ implementation
 //
 procedure GetCpuId(Leaf, SubLeaf: Cardinal; R: PCardinal);
 assembler; asm
+  push ebx
   push esi
   mov esi, R
   mov eax, Leaf
@@ -47,6 +48,7 @@ assembler; asm
   mov [esi+8], ecx
   mov [esi+12], edx
   pop esi
+  pop ebx
 end;
 
 //
@@ -61,7 +63,7 @@ end;
 function GetCPUIDMax(Ext: Boolean): Cardinal;
 var
   _eax, _ebx: Cardinal;
-  R: array[0..3] of Cardinal;
+  R: array[0 .. 3] of Cardinal;
 begin
   asm
     pushfd
@@ -87,9 +89,9 @@ end;
 procedure Impl_GetCpuInfo(out CpuInfo: TCpuInfo); inline;
 var
   M: Cardinal;
-  R: array[0..3] of Cardinal;
+  R: array[0 .. 3] of Cardinal;
 begin
-  CpuInfo.Arch = 'x86';
+  CpuInfo.Arch := 'x86';
   M := GetCPUIDMax(False);
   if M < 1 then
     Exit;
