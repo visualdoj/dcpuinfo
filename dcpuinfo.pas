@@ -23,7 +23,7 @@ procedure GetCpuInfo(out CpuInfo: TCpuInfo);
 
 implementation
 
-{$IF Defined(CPU386)}
+{$IF Defined(CPU386) or Defined(CPUX86_64)}
 {$ASMMODE Intel}
 //
 //  GetCpuId
@@ -37,18 +37,19 @@ implementation
 //
 procedure GetCpuId(Leaf, SubLeaf: Cardinal; R: PCardinal);
 assembler; asm
-  push ebx
-  push esi
-  mov esi, R
+  push {$IF Defined(CPU386)}ebx{$ELSE}rbx{$ENDIF}
+  push {$IF Defined(CPU386)}esi{$ELSE}rsi{$ENDIF}
+  push R
   mov eax, Leaf
-  mov edx, SubLeaf
+  mov ecx, SubLeaf
   cpuid
-  mov [esi], eax
-  mov [esi+4], ebx
-  mov [esi+8], ecx
-  mov [esi+12], edx
-  pop esi
-  pop ebx
+  pop {$IF Defined(CPU386)}esi{$ELSE}rsi{$ENDIF}
+  mov [{$IF Defined(CPU386)}esi{$ELSE}rsi{$ENDIF}   ], eax
+  mov [{$IF Defined(CPU386)}esi{$ELSE}rsi{$ENDIF}+ 4], ebx
+  mov [{$IF Defined(CPU386)}esi{$ELSE}rsi{$ENDIF}+ 8], ecx
+  mov [{$IF Defined(CPU386)}esi{$ELSE}rsi{$ENDIF}+12], edx
+  pop {$IF Defined(CPU386)}esi{$ELSE}rsi{$ENDIF}
+  pop {$IF Defined(CPU386)}ebx{$ELSE}rbx{$ENDIF}
 end;
 
 //
@@ -62,9 +63,12 @@ end;
 //
 function GetCPUIDMax(Ext: Boolean): Cardinal;
 var
+{$IF Defined(CPU386)}
   _eax, _ebx: Cardinal;
+{$ENDIF}
   R: array[0 .. 3] of Cardinal;
 begin
+{$IF Defined(CPU386)}
   asm
     pushfd
     pushfd
@@ -79,6 +83,7 @@ begin
   end ['eax'];
   if ((_eax xor _ebx) and $200000) = 0 then
     Exit(0);
+{$ENDIF}
   if Ext then begin
     GetCpuId($80000000, 0, @R[0]);
   end else
@@ -91,7 +96,11 @@ var
   M: Cardinal;
   R: array[0 .. 3] of Cardinal;
 begin
+{$IF Defined(CPU386)}
   CpuInfo.Arch := 'x86';
+{$ELSE}
+  CpuInfo.Arch := 'x86_64';
+{$ENDIF}
   M := GetCPUIDMax(False);
   if M < 1 then
     Exit;
@@ -157,7 +166,7 @@ end;
 // asm
 //   li GPR3, True
 // end;
-// 
+//
 // procedure Impl_GetCpuInfo(out CpuInfo: TCpuInfo); inline;
 // begin
 //   CpuInfo.Arch := 'MIPS';
@@ -169,31 +178,31 @@ end;
 procedure Impl_GetCpuInfo(out CpuInfo: TCpuInfo); inline;
 begin
   {$IF Defined(CPU86) or Defined(CPU87)}
-    CpuInfo.Arch = 'Intel 8086';
+    CpuInfo.Arch := 'Intel 8086';
   {$ELSEIF Defined(CPUAMD64) or Defined(CPUX86_64)}
-    CpuInfo.Arch = 'x86_64';
+    CpuInfo.Arch := 'x86_64';
   {$ELSEIF Defined(CPUIA64)}
-    CpuInfo.Arch = 'IA-64';
+    CpuInfo.Arch := 'IA-64';
   {$ELSEIF Defined(CPUAMD68) or Defined(CPU68K) or Defined(CPUM68K)}
-    CpuInfo.Arch = 'Motorola 68k';
+    CpuInfo.Arch := 'Motorola 68k';
   {$ELSEIF Defined(CPUM68020)}
-    CpuInfo.Arch = 'Motorola 68020';
+    CpuInfo.Arch := 'Motorola 68020';
   {$ELSEIF Defined(CPUPOWERPC32)}
-    CpuInfo.Arch = 'PowerPC32';
+    CpuInfo.Arch := 'PowerPC32';
   {$ELSEIF Defined(CPUPOWERPC64)}
-    CpuInfo.Arch = 'PowerPC64';
+    CpuInfo.Arch := 'PowerPC64';
   {$ELSEIF Defined(CPUPOWERPC)}
-    CpuInfo.Arch = 'PowerPC';
+    CpuInfo.Arch := 'PowerPC';
   {$ELSEIF Defined(CPUMIPS)}
-    CpuInfo.Arch = 'MIPS';
+    CpuInfo.Arch := 'MIPS';
   {$ELSEIF Defined(CPUSPARC) or Defined(CPUSPARC32)}
-    CpuInfo.Arch = 'SPARCv7';
+    CpuInfo.Arch := 'SPARCv7';
   {$ELSEIF Defined(CPUARM)}
-    CpuInfo.Arch = 'ARM32';
+    CpuInfo.Arch := 'ARM32';
   {$ELSEIF Defined(CPUAVR)}
-    CpuInfo.Arch = 'AVR';
+    CpuInfo.Arch := 'AVR';
   {$ELSE}
-    CpuInfo.Arch = 'Unknown';
+    CpuInfo.Arch := 'Unknown';
   {$ENDIF}
 end;
 {$ENDIF}
